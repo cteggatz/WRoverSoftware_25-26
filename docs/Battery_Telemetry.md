@@ -3,7 +3,7 @@ this document outlines the software side of the battery telemetry project. For e
 
 ## General Overview
 ### Diagram
-``` Mermaid
+```mermaid
 flowchart LR
     subgraph PCB [Battery Estimation PCB]
         direction LR
