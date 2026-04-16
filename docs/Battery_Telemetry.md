@@ -3,7 +3,7 @@ this document outlines the software side of the battery telemetry project. For e
 
 ## General Overview
 ### Diagram
-``` Mermaid
+```mermaid
 flowchart LR
     subgraph PCB [Battery Estimation PCB]
         direction LR
@@ -37,5 +37,7 @@ UART communcation was chosen vs MicroROS simply because of size contraints. The 
 #### STM32
 On the STM32 board itself it will facilitate multiple tasks, but for the purposes of battery telemetry it will do the coulomb counting calculations and communicate with the server.
 
-
+### Blue Pill Information
+[Blue Pill Information](https://www.st.com/resource/en/datasheet/stm32f103cb.pdf)
+[]()
 
