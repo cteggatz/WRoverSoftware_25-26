@@ -22,7 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -57,10 +57,10 @@ typedef struct __attribute__((packed)){
  * @brief response from microcontroller to server. Contains standard packet framing with a 16byte packet. The packet has as 13 byte payload defining the nature of the response.
  */
 typedef struct __attribute__((packed)){
-		uint8_t startBit = 0xAA;
+		uint8_t startBit;
 		Payload data;
-		uint8_t endBit = 0x55;
-		uint8_t checkSum = 0;
+		uint8_t endBit;
+		uint8_t checkSum;
 } Response_Packet;
 
 /**
@@ -73,16 +73,19 @@ typedef struct __attribute__((packed)){
  * @param data float input for additional instruction details
  */
 typedef struct __attribute__((packed)){
-		uint8_t startBit = 0xAA;
+		uint8_t startBit;
 		uint8_t opCode;
 		float data;
-		uint8_t endBit = 0x55;
+		uint8_t endBit;
 		uint8_t checkSum;
 } Input_Packet;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define EMPTY_RESPONSE_PACKET(data_packet) {.startBit = 0xAA, .data = data_packet, .endBit = 0x55, .checkSum = 0};
+#define EMPTY_INPUT_PACKET(opCode, data) {.startBit = 0xAA, .opCode = opCode, .data = data, .endBit = 0x55, .checkSum = 0}
+#define ERROR_PAYLOAD {.status = 0xFF, .payloadOne = 0x01, .payloadTwo = 0x00, .payloadThree = 0x00}
 
 /* USER CODE END PD */
 
@@ -343,21 +346,23 @@ void StartSerialServer(void const * argument)
   for(;;)
   {
 	  // Scan for Serial packet
-	  if(HAL_UART_Receive(&huart2, &serialIn, 8, 0u) == HAL_OK){
+	  if(HAL_UART_Receive(&huart2, serialIn, 8, 0u) == HAL_OK){
+		  HAL_UART_Transmit(&huart2, "Selected option is not available\r\n", 34, 1000u);
 		  // convert the serial into a packet
-		  memcpy(packet, serialIn, sizeOf(Input_Packet));
+		  memcpy(&packet, serialIn, sizeof(Input_Packet));
 		  // make sure that the checksum packet is correct
-		  if(calcCheckSum(packet, sizeOf(packet)-1) != packet.checkSum){
+		  if(calcCheckSum((uint8_t*)&packet, sizeof(packet)-1) != packet.checkSum){
 			  // send a packet back to the Jetson
+			  Response_Packet r = EMPTY_RESPONSE_PACKET(ERROR_PAYLOAD);
+			  HAL_UART_Transmit(&huart2, (uint8_t*)&r, sizeof(r), 1000u);
 		  }
 
 		  // parse op code
 		  switch(packet.opCode){
 		  	  default: // bad opcode
 		  		  // send packet back stating bad result
-		  		  break;
-		  	  case 0x10:
-
+		  		  Response_Packet r = EMPTY_RESPONSE_PACKET(ERROR_PAYLOAD);
+		  		  HAL_UART_Transmit(&huart2, (uint8_t*)&r, sizeof(r), 1000u);
 		  		  break;
 		  }
 	  }
